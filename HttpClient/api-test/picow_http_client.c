@@ -12,8 +12,8 @@
 #include "example_http_client_util.h"
 #include <tusb.h>
 
-#define HOST "fw-download-alias1.raspberrypi.com"
-#define URL_REQUEST "/net_install/boot.sig"
+#define HOST "api.open-meteo.com"
+#define URL_REQUEST "/v1/forecast?latitude=50.9&longitude=-1.4&daily=sunrise,sunset&timezone=Europe/London&forecast_days=7"
 
 int main() {
     stdio_init_all();
@@ -48,10 +48,10 @@ int main() {
         async_context_wait_for_work_ms(cyw43_arch_async_context(), 1000);
     }
 
-    req1.tls_config = altcp_tls_create_config_client(NULL, 0); // https
-    result += http_client_request_sync(cyw43_arch_async_context(), &req1);
-    result += http_client_request_sync(cyw43_arch_async_context(), &req1); // repeat
-    altcp_tls_free_config(req1.tls_config);
+    //req1.tls_config = altcp_tls_create_config_client(NULL, 0); // https
+    //result += http_client_request_sync(cyw43_arch_async_context(), &req1);
+    //result += http_client_request_sync(cyw43_arch_async_context(), &req1); // repeat
+    //altcp_tls_free_config(req1.tls_config);
 
     if (result != 0) {
         panic("test failed");
