@@ -1,0 +1,125 @@
+<html>
+<head>
+    <title>Pico httpd example</title>
+</head>
+<body>
+    <h1>Pico httpd example</h1>
+    <p><img src="/img/rpi.png.gz"/></p>
+    <p><!--#welcome--></p>
+    <p>Uptime is <!--#uptime--> seconds</p>
+    <p><a href="/?test">CGI handler test</a></p>
+    <p>
+        <form action="/led.cgi" method="post">
+            <input type="hidden" name="led_state" value="<!--#ledinv-->">
+            <input type="submit" value="Turn led <!--#ledinv-->">
+        </form>
+    </p>
+
+<hr>
+
+<pre><code class="lang-C"><span class="hljs-comment">/**
+ * Copyright (c) 2022 Raspberry Pi (Trading) Ltd.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ */</span>
+
+<span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">"pico/stdlib.h"</span> ---&gt; In the sdk its pico/ thats why</span>
+<span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">"pico/cyw43_arch.h"</span></span>
+
+<span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span> </span>{
+    stdio_init_all();
+    <span class="hljs-keyword">if</span> (cyw43_arch_init()) {
+        <span class="hljs-built_in">printf</span>(<span class="hljs-string">"Wi-Fi init failed"</span>);
+        <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;
+    }
+    <span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>) {
+        cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, <span class="hljs-number">1</span>);
+        sleep_ms(<span class="hljs-number">250</span>);
+        cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, <span class="hljs-number">0</span>);
+        sleep_ms(<span class="hljs-number">250</span>);
+    }
+}
+</code></pre>
+<hr>
+<h3 id="1-headers">1️⃣ Headers</h3>
+<pre><code class="lang-c"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-string">"pico/stdlib.h"</span></span>
+<span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-string">"pico/cyw43_arch.h"</span></span>
+</code></pre>
+<ul>
+<li><p><strong><code>pico/stdlib.h</code></strong> – standard library for GPIO, sleep, printf, etc.</p>
+</li>
+<li><p><strong><code>pico/cyw43_arch.h</code></strong> – provides <strong>drivers for the CYW43 Wi-Fi chip</strong> on the Pico W.</p>
+<ul>
+<li>Also includes functions to control the <strong>onboard LED</strong> (which is tied to the Wi-Fi chip)</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="2-stdio_init_all-">2️⃣ <code>stdio_init_all();</code></h3>
+<ul>
+<li><p>Initializes <strong>USB serial output and UART</strong></p>
+</li>
+<li><p>Lets you use <code>printf</code> to see messages on your host computer</p>
+</li>
+</ul>
+<hr>
+<h3 id="3-cyw43_arch_init-">3️⃣ <code>cyw43_arch_init()</code></h3>
+<pre><code class="lang-c"><span class="hljs-keyword">if</span> (cyw43_arch_init()) {
+    <span class="hljs-built_in">printf</span>(<span class="hljs-string">"Wi-Fi init failed"</span>);
+    <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;
+}
+</code></pre>
+<ul>
+<li><p>Initializes the <strong>CYW43 Wi-Fi chip</strong></p>
+</li>
+<li><p>Returns non-zero if initialization fails</p>
+</li>
+<li><p>On the Pico W, the <strong>onboard LED is part of the CYW43 Wi-Fi chip</strong> hardware, so you have to init it <strong>even if you only want to blink the LED</strong></p>
+</li>
+</ul>
+<hr>
+<h3 id="4-blink-loop">4️⃣ Blink loop</h3>
+<pre><code class="lang-c"><span class="hljs-keyword">while</span> <span class="hljs-comment">(true)</span> {
+    cyw<span class="hljs-number">43</span>_arch_gpio_put<span class="hljs-comment">(CYW43_WL_GPIO_LED_PIN, 1)</span>;
+    sleep_ms<span class="hljs-comment">(250)</span>;
+    cyw<span class="hljs-number">43</span>_arch_gpio_put<span class="hljs-comment">(CYW43_WL_GPIO_LED_PIN, 0)</span>;
+    sleep_ms<span class="hljs-comment">(250)</span>;
+}
+</code></pre>
+<ul>
+<li><p><code>CYW43_WL_GPIO_LED_PIN</code> is a constant defined in <code>cyw43_arch.h</code> — it represents the <strong>onboard Wi-Fi LED</strong></p>
+</li>
+<li><p><code>cyw43_arch_gpio_put(pin, value)</code> sets the pin <strong>high (1) or low (0)</strong></p>
+</li>
+<li><p>Sleep 250 ms between toggles → <strong>blinks LED at 2 Hz</strong></p>
+</li>
+</ul>
+<hr>
+<h3 id="5-why-wi-fi-is-involved">5️⃣ Why Wi-Fi is involved</h3>
+<ul>
+<li><p>The Pico W’s onboard LED isn’t connected directly to a normal GPIO like the original Pico</p>
+</li>
+<li><p>It’s <strong>wired through the Wi-Fi chip (CYW43)</strong></p>
+</li>
+<li><p>To control it, you <strong>must initialize the Wi-Fi driver</strong> first</p>
+</li>
+<li><p>So even a “simple blink” requires calling <code>cyw43_arch_init()</code> and using <code>cyw43_arch_gpio_put()</code> instead of <code>gpio_put()</code></p>
+</li>
+</ul>
+<hr>
+<p>✅ TL;DR:</p>
+<ul>
+<li><p>On Pico W, the LED is part of the Wi-Fi chip</p>
+</li>
+<li><p>Must init Wi-Fi chip even if you’re not connecting to Wi-Fi</p>
+</li>
+<li><p><code>cyw43_arch_gpio_put()</code> controls that LED</p>
+</li>
+<li><p>Functionally, it <strong>blinks an LED just like normal</strong>, but uses the Wi-Fi driver API</p>
+</li>
+</ul>
+<hr>
+</body>
+</html>
+
+
