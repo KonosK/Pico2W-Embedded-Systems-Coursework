@@ -12,6 +12,7 @@
 #include "lwip/init.h"
 #include "lwip/apps/httpd.h"
 #include <tusb.h>
+#include "hardware/adc.h" //temp
 
 void httpd_init(void);
 
@@ -77,9 +78,13 @@ u16_t ssi_example_ssi_handler(int iIndex, char *pcInsert, int iInsertLen
             printed = snprintf(pcInsert, iInsertLen, "Hello from Pico");
             break;
         }
-        case 2: { // "uptime"
-            uint64_t uptime_s = absolute_time_diff_us(wifi_connected_time, get_absolute_time()) / 1e6;
-            printed = snprintf(pcInsert, iInsertLen, "%"PRIu64, uptime_s);
+        case 2: { // "temp"
+            uint16_t raw = adc_read();
+            const float conversion_factor = 3.3f / (1<<12);
+            float result = raw * conversion_factor;
+            float temp = 27 - (result - 0.706)/0.001721;
+            printf("Temp = %f C\n", temp);
+            printed = snprintf(pcInsert, iInsertLen, "%f", temp);
             break;
         }
         case 3: { // "ledstate"
@@ -112,7 +117,7 @@ u16_t ssi_example_ssi_handler(int iIndex, char *pcInsert, int iInsertLen
 static const char *ssi_tags[] = {
     "status",
     "welcome",
-    "uptime",
+    "temp",
     "ledstate",
     "ledinv",
     "table",
@@ -212,6 +217,11 @@ int main() {
 
     // start http server
     wifi_connected_time = get_absolute_time();
+
+    // init ADC for temperature sensor
+    adc_init();
+    adc_set_temp_sensor_enabled(true);
+    adc_select_input(4);
 
 #if LWIP_MDNS_RESPONDER
     // Setup mdns
