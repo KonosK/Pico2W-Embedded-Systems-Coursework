@@ -5,7 +5,7 @@ Most of the code is adapted from the official **Pico SDK examples**.
 
 > Coursework is ongoing
 
-## Projects / Examples
+## Tasks
 
 - **usbIO** – Simple input/output via USB for a TTY terminal and the Pico 2W  
 - **HttpClient** – HTTP client making requests to an API to fetch sunrise and sunset times in London  
