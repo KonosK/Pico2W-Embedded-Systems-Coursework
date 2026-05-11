@@ -21,7 +21,6 @@ Most of the code is adapted from the official **Pico SDK examples**.
 
 ## Notes
 - All examples are **adapted from the Pico SDK** and coursework instructions  
-- Focused on **low-level embedded systems programming** and microcontroller fundamentals  
 
 ## License
 All rights reserved. For educational purposes only.
